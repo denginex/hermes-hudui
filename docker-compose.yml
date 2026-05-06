@@ -1,0 +1,31 @@
+# Hermes HUD Web UI — Docker Compose for NAS
+#
+# Usage:
+#   1. Build on compile machine:  docker build -t hermes-hudui:latest .
+#   2. Push to registry:          docker tag hermes-hudui:latest your-registry/hermes-hudui:latest
+#                                 docker push your-registry/hermes-hudui:latest
+#   3. On NAS: edit image: line below to point to your registry, then:
+#                                 docker compose up -d
+#
+# Then open http://<your-nas-ip>:3001
+
+services:
+  hermes-hudui:
+    image: hermes-hudui:latest
+    container_name: hermes-hudui
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Point to your Hermes agent data directory
+      # If your NAS has Hermes agent running, mount that path here
+      - HERMES_HOME=/data/.hermes
+    volumes:
+      # Mount your Hermes data directory from NAS host
+      - /path/to/your/.hermes:/data/.hermes:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3001')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

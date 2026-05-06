@@ -1,0 +1,7 @@
+.git
+venv/
+*.md
+.github/
+Dockerfile
+docker-compose.yml
+build-and-push.sh

@@ -3,7 +3,7 @@ name: Build & Push Docker Image
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   build-and-push:
@@ -33,8 +33,8 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/hermes-hudui
           tags: |
             type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=latest
+            type=sha,prefix=${branch}-
+            type=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
       - name: Build and push
         uses: docker/build-push-action@v5

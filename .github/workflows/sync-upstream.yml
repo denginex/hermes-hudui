@@ -1,0 +1,46 @@
+name: Sync from upstream
+
+on:
+  schedule:
+    - cron: '0 3 * * *'    # 每天 UTC 3:00 检查一次
+  workflow_dispatch:         # 也可以手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/joeynyc/hermes-hudui.git
+          git fetch upstream main
+
+      - name: Find merged commits from upstream
+        id: merged
+        run: |
+          # 找出 upstream/main 有但 origin/master 没有的 commits
+          MERGED=$(git log --oneline --format=%H origin/master..upstream/main | tail -1)
+          if [ -z "$MERGED" ]; then
+            echo "No new upstream commits"
+            echo "has_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_update=true" >> $GITHUB_OUTPUT
+            echo "count=$(git log --oneline origin/master..upstream/main | wc -l)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge upstream
+        if: env.has_update == 'true'
+        run: |
+          git merge upstream/main --no-edit
+
+      - name: Push changes
+        if: env.has_update == 'true'
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
